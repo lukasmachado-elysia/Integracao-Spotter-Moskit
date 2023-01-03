@@ -1,11 +1,17 @@
-from flask import Flask, request, abort
-
+from flask import Flask, jsonify, request
+import os
 app = Flask(__name__)
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    if request.method == 'POST':
-        print(request.json)
-        return 'Sucesso', 200
-    else:
-        abort(400)
+@app.route('/integracaoSpotterMoskit', methods=['GET', 'POST'])
+def hello_world():
+	if request.method == 'POST':
+		content = request.json
+		with open("/home/ubuntu/dadosAgenda.txt", "w") as f:
+			f.write(str(content))
+		f.close()
+		return "Success", 200
+	elif request.method == 'GET':
+		return jsonify(message='requisicao GET...')
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
