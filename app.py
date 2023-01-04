@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 stdOut = logging.StreamHandler(stream=stdout) # Saida do log em console
 file = logging.FileHandler("errors.log") # Salva requisicoes com erro critico em arquivo .log
 
-formatter = logging.Formatter("[%(levelname)s] - - {%(module)s->%(funcName)s}} - - [%(asctime)s] -> %(message)s") # Formato do logger
+formatter = logging.Formatter("[%(levelname)s] - - {%(module)s->%(funcName)s} - - [%(asctime)s] -> %(message)s") # Formato do logger
 stdOut.setFormatter(formatter) 
 file.setFormatter(formatter)
 
