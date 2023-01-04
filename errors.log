@@ -1,0 +1,2 @@
+[CRITICAL] - - {__main__} - - [2023-01-04 09:37:05,683] -> O conteudo da requisicao nao esta correto!
+Tipo de dado: <class 'NoneType'> "GET - - utf-8 - - 127.0.0.1 - response 500"

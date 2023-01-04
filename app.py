@@ -3,25 +3,27 @@ from integracao import agendamentoMoskit
 from http.client import HTTPConnection
 import logging
 from sys import stdout
-from os import chmod
+import os
 
 app = Flask(__name__)
 
 # Definindo logger
-HTTPConnection.debuglevel = 1
+HTTPConnection.debuglevel = 0
 
 logger = logging.getLogger(__name__)
 
-stdOut = logging.StreamHandler(stream=stdout)
-file = logging.FileHandler("teste.log")
+stdOut = logging.StreamHandler(stream=stdout) # Saida do log em console
+file = logging.FileHandler("errors.log") # Salva requisicoes com erro critico em arquivo .log
 
-formatter = logging.Formatter("[%(levelname)s] - - [%(asctime)s] -> [%(message)s]")
-stdOut.setFormatter(formatter)
+formatter = logging.Formatter("[%(levelname)s] - - {%(module)s->%(funcName)s}} - - [%(asctime)s] -> %(message)s") # Formato do logger
+stdOut.setFormatter(formatter) 
 file.setFormatter(formatter)
 
+# Definindo nivel 
 logger.setLevel(logging.DEBUG)
-file.setLevel(logging.DEBUG)
+file.setLevel(logging.ERROR)
 
+# Adicionando handlers ao logger
 logger.addHandler(stdOut)
 logger.addHandler(file)
 
@@ -29,24 +31,34 @@ logger.addHandler(file)
 def main():
 	try:
 		if request.method == 'POST':
-			# Verifica se o conteudo eh um dicionario
+			# Primeiramente precisamos verificar se a requisicao manda um json
 			content = request.json
-			print(content)
-			info = "Verificando se a requisicao é do tipo dicionário..."
+
+			# Logging
+			info = "Requisicao recebida \"POST -- {1} -- {0} - response 200\"".format(request.remote_addr, request.url_rule) 
 			logger.info("%s", info)
+
 			if type(content) == dict:
-				info = "Requisição correta! Iniciando integração entre o Spotter e Moskit..."
+				# Logging
+				info = "OK! Iniciando integracao... \"POST -- {1} -- {0} - response 200\"".format(request.remote_addr, request.url_rule) 
 				logger.info("%s", info)
+
 				return agendamentoMoskit(content) # Envia para a funcao que ira lidar com o dicionario e realizar a integracao
 			else:
-				raise TypeError("O conteudo da requisicao nao eh um dicionario!")
+				# JSON nao veio
+				raise TypeError("O conteudo da requisicao nao esta correto!")
+
 		elif request.method == 'GET':
-			info = "\"GET - IP: {0}  {1}\" 200".format(str(request.remote_addr),request.url_charset)
+			# Logging
+			info = "\"GET - - {1} - - {0} - response 200\"".format(request.remote_addr, request.url_rule)
 			logger.info("%s", info)
-			return jsonify(message='Por enquanto nada...')
+
+			return jsonify(message='Por enquanto nada...'), 200
 	except Exception as e:
-		err = "O conteudo da requisicao nao eh um dicionario!\nTipo de dado:" + str(type(content))
+		# Logging
+		err = "O conteudo da requisicao nao esta correto!\nTipo de dado: {2} \"GET - - {1} - - {0} - response 500\"".format(request.remote_addr, request.url_rule,str(type(content)))
 		logger.critical("%s", err)
+
 		return "Critical error", 500
 
 if __name__ == "__main__":
