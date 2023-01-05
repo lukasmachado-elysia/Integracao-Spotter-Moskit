@@ -186,7 +186,7 @@ def search_Id_Moskit_User(jsonAgendamento, allUsers:list=[]) -> int:
             logger.warning(strInfo + " [Nome nao encontrado! - - Utilizando usuario padrao -> 36432: TOMAS CRESTANA ZANETTI]")
             return 36432 # Nao foi localizado o nome e o usuario padrao sera o {'id': 36432, 'name': 'Tomás Crestana Zanetti'} -- att 05/01/2023
     except Exception as e:
-            # Loggin CRITICAL
-            error = strInfo.join(tb.format_exception(e))
-            logger.critical(error + " [Utilizando usuario padrao - - 36432: TOMAS CRESTANA ZANETTI]")
-            return 36432 # Nao foi localizado o nome e o usuario padrao sera o {'id': 36432, 'name': 'Tomás Crestana Zanetti'} -- att 05/01/2023
+        # Loggin CRITICAL
+        error = strInfo.join(tb.format_exception(e))
+        logger.critical(error + " [Utilizando usuario padrao - - 36432: TOMAS CRESTANA ZANETTI]")
+        return 36432 # Nao foi localizado o nome e o usuario padrao sera o {'id': 36432, 'name': 'Tomás Crestana Zanetti'} -- att 05/01/2023
