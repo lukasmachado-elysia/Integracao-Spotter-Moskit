@@ -1,7 +1,0 @@
-[CRITICAL] - - {__main__} - - [2023-01-04 09:37:05,683] -> O conteudo da requisicao nao esta correto!
-Tipo de dado: <class 'NoneType'> "GET - - utf-8 - - 127.0.0.1 - response 500"
-[CRITICAL] - - {integracao->agendamentoMoskit}} - - [2023-01-04 10:33:43,253] -> Traceback (most recent call last):
-[integracao]   File "/home/lukas-elysia/server-test/flask_app/Integracao-Spotter-Moskit/integracao.py", line 11, in agendamentoMoskit
-    logger.info("JSON: " + str(dicionario))
-[integracao] TypeError: Logger.info() missing 1 required positional argument: 'msg'
-

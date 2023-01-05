@@ -13,19 +13,23 @@ HTTPConnection.debuglevel = 0
 logger = logging.getLogger(__name__)
 
 stdOut = logging.StreamHandler(stream=stdout) # Saida do log em console
-file = logging.FileHandler("errors.log") # Salva requisicoes com erro critico em arquivo .log
+fileErrors = logging.FileHandler("errorLogs/errors.log") # Salva requisicoes com erro critico em arquivo .log
+fileDebug = logging.FileHandler("infoLogs/info.log") # Salva info da exec do programa
 
 formatter = logging.Formatter("[%(levelname)s] - - {%(module)s->%(funcName)s} - - [%(asctime)s] -> %(message)s") # Formato do logger
 stdOut.setFormatter(formatter) 
-file.setFormatter(formatter)
+fileErrors.setFormatter(formatter)
+fileDebug.setFormatter(formatter)
 
 # Definindo nivel 
 logger.setLevel(logging.DEBUG)
-file.setLevel(logging.ERROR)
+fileErrors.setLevel(logging.CRITICAL)
+fileDebug.setLevel(logging.DEBUG)
 
 # Adicionando handlers ao logger
 logger.addHandler(stdOut)
-logger.addHandler(file)
+logger.addHandler(fileErrors)
+logger.addHandler(fileDebug)
 
 @app.route('/integracaoSpotterMoskit', methods=['GET', 'POST'])
 def main():
@@ -43,7 +47,8 @@ def main():
 				info = "OK! Iniciando integracao... \"POST -- {1} -- {0} - response 200\"".format(request.remote_addr, request.url_rule) 
 				logger.info("%s", info)
 
-				return agendamentoMoskit(content) # Envia para a funcao que ira lidar com o dicionario e realizar a integracao
+				# Envia para a funcao que ira lidar com o dicionario e realizar a integracao
+				return agendamentoMoskit(content) 
 			else:
 				# JSON nao veio
 				raise TypeError("O conteudo da requisicao nao esta correto!")
