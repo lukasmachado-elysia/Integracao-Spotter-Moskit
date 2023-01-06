@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from integracao import agendamentoMoskit
+from integracao import integracacao_Spotter_Moskit
 from http.client import HTTPConnection
 import logging
 from sys import stdout
@@ -48,7 +48,7 @@ def main():
 				logger.info("%s", info)
 
 				# Envia para a funcao que ira lidar com o dicionario e realizar a integracao
-				return agendamentoMoskit(content) 
+				return integracacao_Spotter_Moskit(content) 
 			else:
 				# JSON nao veio
 				raise TypeError("O conteudo da requisicao nao esta correto!")

@@ -1,19 +1,29 @@
 import traceback as tb
 import requests
 import logging
-import inspect 
+import inspect
+from datetime import datetime, timedelta
 
 # Utilizando o mesmo logger da funcao main
-logger = logging.getLogger("__main__")
+logger = logging.getLogger("__main__") # Alterar de acordo com o nome da função main que inicia o server FLASK
 
 # Head requisicoes moskit
 head = {'Content-Type': "application/json",
-        'apikey': "a2c471ed-68d4-4693-916c-7afd42e0d943"}
+        'apikey': "a2c471ed-68d4-4693-916c-7afd42e0d943",
+        "X-Moskit-Origin": "Spotter_Integracao_TI_Elysia"} # Tpken da API do Moskit
 
-def agendamentoMoskit(dicionario:dict):
+def integracacao_Spotter_Moskit(dicionario:dict):
+    '''
+    # Integracao Spotter Moskit
+    ### Autor: Lukas Silva Machado - 06/01/2023
+        * 1 - FUNCIONALIDADEs: `INTEGRACAO SPOTTER-MOSKIT` - Implementado na v1.0 do programa.
+                - Quando o pré-vendedor agendar uma visita devemos criar tudo do zero.
+        ----------
+        * 2 - FUNCIONALDADE: `REAGENDAMENTO SPOTTER-MOSKIT` - À implementar.
+                - Quando o pré-vendedor alterar o horário de uma visita devemos buscar o negócio respectivo e alterar no moskit sua data. 
+    '''
     try:
         # Logging
-        #logger.info("JSON: " + str(dicionario))
         functionExec = inspect.currentframe()
         strInfo = "[module({}) -> func({}): ]".format(str(__name__),str(inspect.getframeinfo(functionExec).function)) # Coloca qual funcao ocorreu erro/info
         # ---------------------------------------------------------------------
@@ -25,37 +35,20 @@ def agendamentoMoskit(dicionario:dict):
         #                       Filtros (Isso eh a atividade)
         # ---------------------------------------------------------------------
 
-        # Buscando Vendedor
-        #
-        # -- codigo aqui
-        logger.info("[API MOSKIT]: Buscando vendedor nos usuarios Moskit...")
-        idVendedor = search_Id_Moskit_User(dicionario, lista_Users_Moskit())
-        #
+        # -- Aqui verificamos se o tipo de requisicao será um AGENDAMENTO ou REAGENDAMENTO --
+        tipoEvento = dicionario['Event']
 
-        # Buscando Empresa ou criando uma caso nao exista
-        #
-        # -- codigo aqui
-        #
+        if tipoEvento == 'event.schedule':
+            logger.info("[API MOSKI: AGENDAMENTO]")
 
-        # Buscando Contato ou criando um caso nao exista
-        #
-        # -- codigo aqui
-        #
+            # Funcao de agendamento
+            agendamento_Moskit(dicionario)
 
-        # Buscando Perguntas e respostas
-        #
-        # -- codigo aqui
-        #
+        elif tipoEvento == 'event.reschedule':
+            logger.info("[API MOSKIT: REAGENDAMENTO]")
 
-        # Criando Negocio e linkando -> Atividade, Empresa, Contato
-        #
-        # -- codigo aqui
-        #
-
-        # Finalizando...
-        #
-        #
-        #
+            # Funcao de reagendamento
+            reagendamento_Moskit(dicionario)
         
         # COLOCAR AQUI COMO RETORNO A REQUISICAO DE AGENDAMENTO DO JSON MOSKIT
         #
@@ -66,6 +59,170 @@ def agendamentoMoskit(dicionario:dict):
         error = strInfo.join(tb.format_exception(e))
         logger.critical(error)
         return (error, 500)
+
+def agendamento_Moskit(informacoes:dict):
+    try:
+        # ---------------------------------------------------------------------
+        # Ordem de criacao de cada informacao eh:
+        #                         --  Negocio  --
+        #                         -- Atividade --
+        #                         --  Empresa  --
+        #                         --  Contato  --                        
+        # ---------------------------------------------------------------------
+        
+        
+        # ---------------------------------------------------------------------
+        #               Pegando informacoes iniciais para o negocio
+        
+        # Buscando Vendedor
+        logger.info("[API MOSKIT]: Buscando vendedor nos usuarios Moskit...")
+        idVendedor = search_Id_Moskit_User(informacoes, lista_Users_Moskit())
+        
+        # #Dados do Agendamento
+        endReunion = datetime.strptime(informacoes['Agendamento']['DtFimDateTime'].replace("'",""),"%Y-%m-%dT%H:%M:%S")
+        startReunion = datetime.strptime(informacoes['Agendamento']['DtInicioDateTime'].replace("'",""),"%Y-%m-%dT%H:%M:%S")
+        timeReunion = timedelta.total_seconds(endReunion - startReunion) // 60 # Tempo total (Em minutos) da reuniao
+        
+        # Dados da Empresa
+        nomeEmpresa = str(informacoes['Lead']['Company'])
+
+        # ---------------------------------------------------------------------
+        # Criando Negocio
+        payload = { "createdBy": {"id": idVendedor},    # Id do vendedor responsavel 
+                    "responsible": {"id": idVendedor},  # Id do vendedor responsavel
+                    "name": nomeEmpresa,                # Nome da empresa 
+                    "price": 1,                         # Verificar se e importante
+                    "status": "OPEN",                   # Negocio aberto
+                    "stage": {"id": 109019}             # Define o estagio como sendo visita agendada
+                    }
+
+        # Insere o negocio no moskit
+        req = requests.post(url="https://api.moskitcrm.com/v2/deals", json=payload, headers=head)
+
+        # Verifica se foi possivel realizar criacao
+        if req.status_code != 200:          
+            # Informa o erro que ocorreu
+            logger.critical("[API MOSKIT]: Erro na criacao do negocio -> " + req.json())
+            # Enviar e-mail informando erro ao agendar?
+            #
+            #
+        else:  
+            # Criou negocio
+            codigoNegocio = req.json()['id']
+
+            # Criando Atividade (FILTROS)
+            # Buscando filtros antes de criar a atividade
+            idLead = informacoes['Lead']['Id'] # Utiliza o id do Lead para buscar as informacoes
+            urlFilter = 'https://api.exactspotter.com/v3/QualificationHistories?$filter=leadId eq ' + idLead
+
+            req = requests.get(urlFilter, headers=head)
+            
+            # Verifica se retornou filtros corretamente corretamente
+            if req.status_code != 200:
+                logger.critical("[API MOSKIT]: Erro na criacao do negocio -> " + req.json())
+                # Enviar e-mail informando erro ao agendar?
+                #
+                #
+            else:
+                # Retornou filtros
+                # Agora so formatar os fitros para ser inserido nas notas de criacao da atividade
+                filtros = formatacao_Filtros_Moskit(req.json())
+
+                # Criando Atividade
+                payLoad = {'title': "Agendamento Pré-Venda ({})".format(nomeEmpresa),
+                'createdBy': {'id': idVendedor}, # Id do vendedor responsavel
+                'responsible': {'id': idVendedor}, # Id do vendedor responsavel
+                'doneUser': {"id": idVendedor}, # Id do vendedor responsavel
+                'type': {'id': 57647}, # Tipo: Agendamento
+                'duration': timeReunion, # Duracao da reuniao    
+                'dueDate': datetime.today().strftime("%Y-%m-%dT%H:%M:%S.000-%X"),
+                'doneDate': datetime.today().strftime("%Y-%m-%dT%H:%M:%S.000-%X"), # Define atividade como fechada
+                'notes': filtros, # Nota com filtros
+                'deals': [{'id': codigoNegocio}]}
+
+                req = requests.post(url="https://api.moskitcrm.com/v2/activities", headers=head, json=payLoad)
+
+                # Verifica se foi possivel criar atividade
+                if req.status_code != 200:
+                    logger.critical("[API MOSKIT]: Erro na criacao da atividade -> " + req.json())
+                    # Enviar e-mail informando erro ao agendar?
+                    #
+                    #
+                else: 
+                    # Criou Atividade
+                    codigoAtividade = req.json()['id']
+
+                    # Criando um Empresa
+                    # --- Dados a inserir na empresa:----
+                    #          * Telefone da Empresa
+                    #          * CNPJ
+                    #          * ORIGEM - TIPO DE PROSPECCAO
+                    #          * MERCADO 
+                    #          * ESTADO
+                    #          * CIDADE
+                    # -- codigo aqui
+                    #
+
+        # Buscando Contato 
+        #
+        # -- codigo aqui
+        #
+
+        return "Agendado"
+    except Exception as e:
+        return "Erro"
+    
+
+def reagendamento_Moskit(informacoes:dict):
+    # Buscando Empresa 
+    #
+    # -- codigo aqui
+    #
+
+    # Buscando Contato 
+    #
+    # -- codigo aqui
+    #
+
+    # Buscando perguntas e respostas (FILTROS)
+    #
+    # -- codigo aqui
+    #
+
+    # Buscando Negocio e realizando update da reuniao
+    #
+    # -- codigo aqui
+    #
+    return "Reagendado"
+
+def formatacao_Filtros_Moskit(jsonFiltros:dict) -> str:
+    '''
+        * Realiza a formatacao do JSON de filtros do Lead para um formato legivel ao usuario na atividade do Moskit.\n
+        Retorna (str)
+    '''
+    try:
+        functionExec = inspect.currentframe()
+        strInfo = "[module({}) -> func({}): ]".format( str(__name__),
+                                                       str(inspect.getframeinfo(functionExec).function) )
+
+        stages = jsonFiltros['value'] # Retorno completo
+        qa = ""
+        print("Size response: {}".format(len(stages)))
+        # Percorrer resposta e printar QA
+        for stage in stages: # Percorre estagios do lead - filtro 1, 2, 3, Qualificados...
+            qa += "# Estágio Lead: {0} #\n# Score: {1} #\n".format(stage['stage'], stage['score'])
+            for question in stage['questionAnswers']: # Percorre perguntas
+                for answer in question['answers']: # Percorre respostas
+                    qa += "{0} -> {1}\n".format(question['question'], answer['text'])
+            qa += "\n"
+        return qa
+    except Exception as e:
+        # Loggin Warning
+        error = strInfo.join(tb.format_exception(e))
+        logger.critical("Erro na formatacao dos filtros: " + error)
+        # Em caso de erro retorna o json em formato de string mesmo
+        return str(jsonFiltros)
+    
 
 def lista_Users_Moskit() -> list:
     '''
