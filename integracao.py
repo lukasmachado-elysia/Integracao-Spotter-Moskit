@@ -160,8 +160,24 @@ def agendamento_Moskit(informacoes:dict):
                     #          * MERCADO 
                     #          * ESTADO
                     #          * CIDADE
-                    # -- codigo aqui
-                    #
+                    
+                    payLoad = {"createdBy": {"id": idVendedor},                                 # Id do vendedor responsavel
+                                "responsible": {"id": idVendedor},                              # Id do vendedor responsavel
+                                "name": nomeEmpresa,                                            # Nome da empresa
+                                'phones': [{'number': "5133333333"}],                           # Telefone da empresa
+                                'emails': [{'address': "empresaInventada@inventado.com.br"}],
+                                'deals': [{'id': codigoNegocio}],                               # Negocio para linkar
+                                'entityCustomFields': [
+                                                        {'id': 'CF_POEMy6UeCJGGjmdk', 'textValue': 'Endereco completo'},
+                                                        {'id': 'CF_gvGm31U0Cz55Qq45', 'textValue': 'Lukas Machado'},
+                                                        {'id': 'CF_wPVm2bU2CbRR9mK6', 'textValue': 'Q NAI'},              
+                                                        {'id': 'CF_Rg7MnpULCAQQBDvd', 'textValue': 'Prospecção Ativa'}
+                                                        ]} 
+
+                    req = requests.post(url="https://api.moskitcrm.com/v2/companies", json=payLoad, headers=head)
+
+                    
+                    codigoEmpresa = req.json()['id']
 
         # Buscando Contato 
         #
