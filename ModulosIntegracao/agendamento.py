@@ -135,8 +135,8 @@ def agendamento_Moskit(informacoes:dict):
                     payLoad = {"createdBy": {"id": idVendedor},                                 # Id do vendedor responsavel
                                 "responsible": {"id": idVendedor},                              # Id do vendedor responsavel
                                 "name": nomeEmpresa,                                            # Nome da empresa
-                                'phones': [{'number': "5133333333"}],                           # Telefone da empresa
-                                'emails': [{'address': "empresaInventada@inventado.com.br"}],   # Email
+                                'phones': [{'number': "Nao cadastrado"}],                           # Telefone da empresa
+                                'emails': [{'address': "Nao cadastrado"}],   # Email
                                 'deals': [{'id': codigoNegocio}],                               # Negocio para linkar
                                 'entityCustomFields': [
                                                         {'id': 'CF_POEMy6UeCJGGjmdk', 'textValue': dadosEmpresa['endereco']},
@@ -173,7 +173,7 @@ def agendamento_Moskit(informacoes:dict):
                                         'name': contact['Name'], # Nome do contato principal
                                         'notes': contact['Position'], # Cargo do contato
                                         'phones': [{'number': contact['Phone']}], # Telefone do contato 
-                                        'emails': [{'address': "contatoEmpresaInventada@inventado.com.br"}], # E-mail do contato, se tiver
+                                        'emails': [{'address': "Nao cadastrado"}], # E-mail do contato, se tiver
                                         'deals': [{'id': codigoNegocio}], # Id do negocio para linkar
                                         'employers': [{'company': {'id': codigoEmpresa}}]} # Id da empresa para linkar
 
@@ -181,7 +181,7 @@ def agendamento_Moskit(informacoes:dict):
 
                             # Verifica se o contato foi criado
                             if req.status_code != 200:
-                                logger.critical("[API MOSKIT]: Erro na criacao do contato: {}-> {}".format,(contact['Name'], str(req.json())))                  
+                                logger.critical("[API MOSKIT]: Erro na criacao do contato: {}-> {}".format(contact['Name'], str(req.json())))                  
                                 return req.json(), req.status_code
                             else:
                                 # Contato criado

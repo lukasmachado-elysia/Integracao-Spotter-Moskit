@@ -29,7 +29,7 @@ def get_Contacts_Spotter(infos:dict, logger):
                 if "Position" in contact.keys():
                     position = contact['Position']
                 else:
-                    Position = '-'
+                    position = '-'
                 # Verificando telefone
                 if "Phone" in contact.keys():
                     phone = contact['Phone']

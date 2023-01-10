@@ -5,7 +5,7 @@ from ModulosIntegracao.agendamento import agendamento_Moskit
 from ModulosIntegracao.reagendamento import reagendamento_Moskit
 
 # Utilizando o mesmo logger da funcao main
-logger = logging.getLogger("__main__") # Alterar de acordo com o nome da função main que inicia o server FLASK
+logger = logging.getLogger("__main__") # Alterar na funcao AGENDAMENTO.py e REAGENDAMENTO.py
 
 def integracacao_Spotter_Moskit(dicionario:dict):
     '''
@@ -44,7 +44,10 @@ def integracacao_Spotter_Moskit(dicionario:dict):
 
             # Funcao de reagendamento
             reagendamento_Moskit(dicionario)
-        
+        elif tipoEvento == 'event.leadfiltered':
+            with open("../requisicaoFeedback.txt", "w") as f:
+                f.write(dicionario)
+            f.close()
         # COLOCAR AQUI COMO RETORNO A REQUISICAO DE AGENDAMENTO DO JSON MOSKIT
         #
         #
