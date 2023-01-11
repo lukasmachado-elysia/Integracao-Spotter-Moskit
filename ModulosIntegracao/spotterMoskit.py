@@ -1,6 +1,7 @@
 import requests
 import inspect
 import traceback as tb
+from unidecode import unidecode
 
 # Head requisicoes moskit
 headMoskit = {'Content-Type': "application/json",
@@ -22,22 +23,26 @@ def get_Contacts_Spotter(infos:dict, logger):
         else:
             # Percorrendo contatos
             listContacts = infos['Lead']['Contact']
-            contacts = []
+
             for contact in listContacts:
                 name = contact['Name']
                 # Verificando posicao
                 if "Position" in contact.keys():
                     position = contact['Position']
                 else:
-                    position = '-'
+                    position = 'Não informada'
                 # Verificando telefone
                 if "Phone" in contact.keys():
                     phone = contact['Phone']
                 else:
-                    phone = '-'
-                # Coloca na lista
-                contacts.append({'Name': name, 'Position': position, 'Phone': phone})
-            return contacts
+                    phone = 'Não informado'
+                # Verificando E-mail
+                if  "Email" in contact.keys():
+                    email = contact['Email']
+                else:
+                    email = "Não informado"
+                    
+            return [{'Name': name, 'Position': position, 'Phone': phone, 'Email': email}]
     except Exception as e:
         # Logging
         functionExec = inspect.currentframe()
@@ -54,26 +59,72 @@ def dados_Empresa(jsonEmpresa:dict, logger) -> dict:
         strInfo = "[module({}) -> func({}): ]".format( str(__name__),
                                                        str(inspect.getframeinfo(functionExec).function) )
         # Criando dicionario
-        dictDados = {'origemEmpresa': '',
-                    'preVendedor': '',
-                    'origemCaptacao': '',
-                    'endereco': ''}
+        dictDados = {'origemEmpresa': 'Não nformado',
+                    'preVendedor': 'Não informado',
+                    'origemCaptacao': 'Não informado',
+                    'endereco': 'Não informado',
+                    'cnpj': 'Não informado',
+                    'site': 'Não informado',
+                    'telefone': 'Não informado',
+                    'email': 'Não informado'}
         
         # Preenchendo informacoes
-        dictDados['origemEmpresa'] = str(jsonEmpresa['Lead']['Industry']['value'])
-        dictDados['preVendedor'] = " ".join([str(jsonEmpresa['Lead']['SDR']['Name']),str(jsonEmpresa['Lead']['SDR']['LastName'])])
-        dictDados['origemCaptacao'] = str(jsonEmpresa['Lead']['Origem']['value'])
-        dictDados['endereco'] = ", ".join([str(jsonEmpresa['Lead']['Endereco']['Endereco_Maps']),
-                                            str(jsonEmpresa['Lead']['Endereco']['Logradouro']),
-                                            str(jsonEmpresa['Lead']['Endereco']['Complemento'])])
+        
+        #  Industry = Origem 
+        if "Industry" in jsonEmpresa['Lead'].keys():
+            # Verifica se o campo tem algum valor
+            if not jsonEmpresa['Lead']['Industry']['value'].replace(" ", "") == "":
+                dictDados['origemEmpresa'] = str(jsonEmpresa['Lead']['Industry']['value'])
 
+        # SDR = Pre vendedor
+        if "SDR" in jsonEmpresa['Lead'].keys():
+            dictDados['preVendedor'] = " ".join([str(jsonEmpresa['Lead']['SDR']['Name']),str(jsonEmpresa['Lead']['SDR']['LastName'])])
+
+        # Origem = Origem captacao do cliente
+        if "Origem" in jsonEmpresa['Lead'].keys():
+            # Verifica se o campo tem algum valor
+            if not jsonEmpresa['Lead']['Origem']['value'].replace(" ", "") == "":   
+                dictDados['origemCaptacao'] = str(jsonEmpresa['Lead']['Origem']['value'])
+        
+        # Endereco
+        if "Endereco" in jsonEmpresa['Lead'].keys():
+            # Percorre os labels e vai colocando o que tem de informacao no endereco
+            for label in jsonEmpresa['Lead']['Endereco'].keys():
+                # Verifica se o campo tem algum valor
+                if not jsonEmpresa['Lead']['Endereco'][label].replace(" ","") == "":
+                    dictDados['endereco'] += jsonEmpresa['Lead']['Endereco'][label]
+        
+        # CNPJ
+        if "CustomFields" in jsonEmpresa['Lead'].keys():
+            # Percorre tipos de campo personalizado
+            for customFields in jsonEmpresa['Lead']['CustomFields']:
+                # Percorre cada campo
+                for field in customFields.keys(): 
+                    # Verifica se eh o campo do cnpj
+                    if customFields[field] == "_cnpj": 
+                        # Verifica se o campo tem algum valor
+                        if not customFields['value'].replace(" ","") == "":
+                            dictDados['cnpj'] = customFields['value']
+                            break
+        # Site
+        if "Site" in jsonEmpresa['Lead'].keys():
+            dictDados['site'] = jsonEmpresa['Lead']['Site']
+
+        # Telefone                       
+        if "Phone" in jsonEmpresa['Lead'].keys():
+            dictDados['telefone'] = jsonEmpresa['Lead']['Phone']
+        
+        # Email
+        if "Email" in jsonEmpresa['Lead']['Contact'][0]:
+            dictDados['email'] = jsonEmpresa['Lead']['Contact'][0]['Email']
+            
         return dictDados
     except Exception as e:
         # Loggin Warning
         error = strInfo.join(tb.format_exception(e))
         logger.critical("Erro ao buscar dados da empresa: " + error)
         # Em caso de erro retorna o que foi preenchido
-        return  dictDados
+        return dictDados
 
 def formatacao_Filtros_Moskit(jsonFiltros:dict, logger) -> str:
     '''
@@ -89,11 +140,11 @@ def formatacao_Filtros_Moskit(jsonFiltros:dict, logger) -> str:
         qa = ""
         # Percorrer resposta e printar QA
         for stage in stages: # Percorre estagios do lead - filtro 1, 2, 3, Qualificados...
-            qa += "# Estágio Lead: {0} #\n# Score: {1} #\n".format(stage['stage'], stage['score'])
+            qa += "--> Estágio Lead: {0} \n--> Score: {1} \n".format(stage['stage'], stage['score'])
             for question in stage['questionAnswers']: # Percorre perguntas
                 for answer in question['answers']: # Percorre respostas
                     qa += "{0} -> {1}\n".format(question['question'], answer['text'])
-            qa += "\n"
+            qa += "\n\n"
         return qa
     except Exception as e:
         # Loggin Warning
@@ -177,7 +228,7 @@ def search_Id_Moskit_User(logger, jsonAgendamento, allUsers:list=[]) -> int:
 
             # Verificar se o nome existe na lista
             for user in activeUsers:
-                name = user['name'].lower()
+                name = unidecode(user['name'].lower()) # deixando minusculo e retirando acentos
                 # Encontrando Nome 
                 # Verificar se o pNome e o sNome estao contidos no nome da lista de ativos do moskit
                 # Ex.: Lista Users -> name = 'maria joaquina fernandes carvalho'
@@ -187,15 +238,15 @@ def search_Id_Moskit_User(logger, jsonAgendamento, allUsers:list=[]) -> int:
                 pNomeEcontrado = 0
                 sNomeEcontrado = 0
 
-                if nameSalesRep['pNome'] in name: # Se primeiro nome estiver na string 'name' entao verifica se o sobrenome
+                if unidecode(nameSalesRep['pNome']) in name: # Se primeiro nome estiver na string 'name' entao verifica se o sobrenome
                     pNomeEcontrado +=1
-                    if nameSalesRep['sNome'] in name: # Verificar se sobrenome inteiro esta na string 'name'
+                    if unidecode(nameSalesRep['sNome']) in name: # Verificar se sobrenome inteiro esta na string 'name'
                         sNomeEcontrado = 2 # 2 pois encontrou o sobrenome inteiro
                         idMoskitUser = user['id'] # Retorna o Id do usuario encontrado
                         break
                     else:
                         # Splitar o nameSalesRep['sName'] e verificar se cada substring do sobrenome esta presente na string 'name'
-                        subStringSobrenome = nameSalesRep['sNome'].split(" ")
+                        subStringSobrenome = unidecode(nameSalesRep['sNome'].split(" "))
                         for sub in subStringSobrenome:
                             if sub in name:
                                 sNomeEcontrado += 1
@@ -218,10 +269,10 @@ def search_Id_Moskit_User(logger, jsonAgendamento, allUsers:list=[]) -> int:
         else:
             # Nome nao encontrado
             # Logging WARNING
-            logger.warning(strInfo + " [Nome nao encontrado! - - Utilizando usuario padrao -> 36432: TOMAS CRESTANA ZANETTI]")
-            return 36432 # Nao foi localizado o nome e o usuario padrao sera o {'id': 36432, 'name': 'Tomás Crestana Zanetti'} -- att 05/01/2023
+            logger.warning(strInfo + " [Nome ({}) nao encontrado! - - Utilizando usuario padrao -> 36432: TOMAS CRESTANA ZANETTI]".format(str(nameSalesRep['pNome']+nameSalesRep['sNome'])))
+            return 36432 # Nao foi localizado o nome e o usuario padrao sera o {'id': 36432, 'name': 'Tomas Crestana Zanetti'} -- att 05/01/2023
     except Exception as e:
         # Loggin CRITICAL
         error = strInfo.join(tb.format_exception(e))
         logger.critical(error + " [Utilizando usuario padrao - - 36432: TOMAS CRESTANA ZANETTI]")
-        return 36432 # Nao foi localizado o nome e o usuario padrao sera o {'id': 36432, 'name': 'Tomás Crestana Zanetti'} -- att 05/01/2023
+        return 36432 # Nao foi localizado o nome e o usuario padrao sera o {'id': 36432, 'name': 'Tomas Crestana Zanetti'} -- att 05/01/2023

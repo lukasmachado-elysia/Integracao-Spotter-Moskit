@@ -5,7 +5,7 @@ from ModulosIntegracao.agendamento import agendamento_Moskit
 from ModulosIntegracao.reagendamento import reagendamento_Moskit
 
 # Utilizando o mesmo logger da funcao main
-logger = logging.getLogger("__main__") # Alterar na funcao AGENDAMENTO.py e REAGENDAMENTO.py
+logger = logging.getLogger(__name__) # Alterar na funcao AGENDAMENTO.py e REAGENDAMENTO.py
 
 def integracacao_Spotter_Moskit(dicionario:dict):
     '''
@@ -16,6 +16,9 @@ def integracacao_Spotter_Moskit(dicionario:dict):
         ----------
         * 2 - FUNCIONALDADE: `REAGENDAMENTO SPOTTER-MOSKIT` - À implementar.
                 - Quando o pré-vendedor alterar o horário de uma visita devemos buscar o negócio respectivo e alterar no moskit sua data. 
+        ----------
+        * 3 - FUNCIONALIDADE: `ENVIO DE FEEDBACK APÓS REUNIÃO DOS EXECUTIVOS DE VENDA` - À implementar.
+                - Quando o executivo de vendas finalizar a reunião e realizar o feedback, deve ser criada uma nova atividade no mesmo negócio do lead com as novas informacoes.
     '''
     try:
         # Logging
@@ -44,7 +47,8 @@ def integracacao_Spotter_Moskit(dicionario:dict):
 
             # Funcao de reagendamento
             reagendamento_Moskit(dicionario)
-        elif tipoEvento == 'event.leadfiltered':
+            
+        elif tipoEvento == 'event.leadqualified':
             with open("../requisicaoFeedback.txt", "w") as f:
                 f.write(dicionario)
             f.close()

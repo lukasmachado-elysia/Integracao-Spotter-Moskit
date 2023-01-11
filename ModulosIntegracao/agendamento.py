@@ -135,14 +135,16 @@ def agendamento_Moskit(informacoes:dict):
                     payLoad = {"createdBy": {"id": idVendedor},                                 # Id do vendedor responsavel
                                 "responsible": {"id": idVendedor},                              # Id do vendedor responsavel
                                 "name": nomeEmpresa,                                            # Nome da empresa
-                                'phones': [{'number': "Nao cadastrado"}],                           # Telefone da empresa
-                                'emails': [{'address': "Nao cadastrado"}],   # Email
+                                'phones': [{'number': dadosEmpresa['telefone']}],               # Telefone da empresa
+                                'emails': [{'address': dadosEmpresa['email']}],                 # Email
+                                'domain': dadosEmpresa['site'],                                 # Site
                                 'deals': [{'id': codigoNegocio}],                               # Negocio para linkar
                                 'entityCustomFields': [
                                                         {'id': 'CF_POEMy6UeCJGGjmdk', 'textValue': dadosEmpresa['endereco']},
                                                         {'id': 'CF_gvGm31U0Cz55Qq45', 'textValue': dadosEmpresa['preVendedor']},
                                                         {'id': 'CF_wPVm2bU2CbRR9mK6', 'textValue': dadosEmpresa['origemEmpresa']},              
-                                                        {'id': 'CF_Rg7MnpULCAQQBDvd', 'textValue': dadosEmpresa['origemCaptacao']}
+                                                        {'id': 'CF_Rg7MnpULCAQQBDvd', 'textValue': dadosEmpresa['origemCaptacao']},
+                                                        {'id': 'CF_AE5mppUjCd981mO3', 'textValue': dadosEmpresa['cnpj']}
                                                       ]} 
 
                     logger.info("[API MOSKIT]: Criando Empresa...")
@@ -160,20 +162,20 @@ def agendamento_Moskit(informacoes:dict):
                         codigoEmpresa = req.json()['id']
                         logger.info("[API MOSKIT]: Empresa Id: " + str(codigoEmpresa))
 
-                        # Percorrer contatos e ir adicionando um por um
+                        # Dados do contato principal
                         contatos = get_Contacts_Spotter(informacoes, logger)
                         
                         # Variavel para verificar se foi criado algum contato
                         contatoCriado = False
 
-                        # Criando contato
+                        # Criando contato <--- ALTERAR PARA COLOCAR APENAS 1 CONTATO
                         for contact in contatos:
                             payLoad = {'createdBy': {'id': idVendedor}, # Id do vendedor responsavel
                                         'responsible': {'id': idVendedor}, # Id do vendedor responsavel
                                         'name': contact['Name'], # Nome do contato principal
                                         'notes': contact['Position'], # Cargo do contato
                                         'phones': [{'number': contact['Phone']}], # Telefone do contato 
-                                        'emails': [{'address': "Nao cadastrado"}], # E-mail do contato, se tiver
+                                        'emails': [{'address': contact['Email']}], # E-mail do contato, se tiver
                                         'deals': [{'id': codigoNegocio}], # Id do negocio para linkar
                                         'employers': [{'company': {'id': codigoEmpresa}}]} # Id da empresa para linkar
 
@@ -181,7 +183,8 @@ def agendamento_Moskit(informacoes:dict):
 
                             # Verifica se o contato foi criado
                             if req.status_code != 200:
-                                logger.critical("[API MOSKIT]: Erro na criacao do contato: {}-> {}".format(contact['Name'], str(req.json())))                  
+                                logger.critical("[API MOSKIT]: Erro na criacao do contato: {}-> {}".format(contact['Name'], str(req.json())))
+                                logger.warning("[API MOSTKI]: Negocio criado com aviso! Id do negocio: " + str(codigoNegocio))                  
                                 return req.json(), req.status_code
                             else:
                                 # Contato criado

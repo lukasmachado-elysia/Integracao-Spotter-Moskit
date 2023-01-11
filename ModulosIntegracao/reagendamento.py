@@ -1,17 +1,18 @@
-import traceback as tb
-import requests
+#import traceback as tb
+#import requests
 import logging
-import inspect
-from ModulosIntegracao.spotterMoskit import lista_Users_Moskit, dados_Empresa, formatacao_Filtros_Moskit
-from datetime import datetime, timedelta
+#import inspect
+#from ModulosIntegracao.spotterMoskit import lista_Users_Moskit, dados_Empresa, formatacao_Filtros_Moskit
+#from datetime import datetime, timedelta
 
 # Utilizando o mesmo logger da funcao main
-logger = logging.getLogger("__main__") # Alterar de acordo com o nome da função main que inicia o server FLASK
+logger = logging.getLogger("app") # Alterar de acordo com o nome da função main que inicia o server FLASK
 
 # Head requisicoes moskit
-headMoskit = {'Content-Type': "application/json",
-        'apikey': "a2c471ed-68d4-4693-916c-7afd42e0d943",
-        "X-Moskit-Origin": "Spotter_Integracao_TI_Elysia"} # Tpken da API do Moskit
+headMoskit = {
+              'Content-Type': "application/json",
+              'apikey': "a2c471ed-68d4-4693-916c-7afd42e0d943",
+              "X-Moskit-Origin": "Spotter_Integracao_TI_Elysia"} # Token da API do Moskit
 
 headSpotter = {
   'Content-Type': 'application/json',
