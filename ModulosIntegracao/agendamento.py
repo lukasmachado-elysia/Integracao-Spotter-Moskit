@@ -6,7 +6,7 @@ from  ModulosIntegracao.spotterMoskit import lista_Users_Moskit, dados_Empresa, 
 from datetime import datetime, timedelta
 
 # Utilizando o mesmo logger da funcao main
-logger = logging.getLogger("__main__") # Alterar de acordo com o nome da função main que inicia o server FLASK
+logger = logging.getLogger("app") # Alterar de acordo com o nome da função main que inicia o server FLASK
 
 # Head requisicoes moskit
 headMoskit = {'Content-Type': "application/json",
@@ -57,9 +57,9 @@ def agendamento_Moskit(informacoes:dict):
                     "status": "OPEN",                                   # Negocio aberto
                     "stage": {"id": 109019},                            # Define o estagio como sendo visita agendada
                     'entityCustomFields':[
-                                            {'id': 'CF_QJXmA5ijCJwdEm25', 'textValue': dadosEmpresa['endereco']},
-                                            {'id': 'CF_dVKmQ5i1CdBeWmWR', 'textValue': dadosEmpresa['preVendedor']},
-                                            {'id': 'CF_x1kq6oinCwXWrMzY', 'textValue': dadosEmpresa['origemEmpresa']},              
+                                            {'id': 'CF_3NrDZAinCXegvmP5', 'textValue': dadosEmpresa['endereco']},
+                                            {'id': 'CF_dN7MGPiGCOxnjmeY', 'textValue': dadosEmpresa['preVendedor']},
+                                            {'id': 'CF_lXODObiYCpj30maN', 'textValue': dadosEmpresa['origemEmpresa']},              
                                             {'id': 'CF_gvGm3Bi0Cz5oaM45', 'textValue': dadosEmpresa['origemCaptacao']}         
                                          ]}
 
@@ -137,7 +137,6 @@ def agendamento_Moskit(informacoes:dict):
                                 "name": nomeEmpresa,                                            # Nome da empresa
                                 'phones': [{'number': dadosEmpresa['telefone']}],               # Telefone da empresa
                                 'emails': [{'address': dadosEmpresa['email']}],                 # Email
-                                'domain': dadosEmpresa['site'],                                 # Site
                                 'deals': [{'id': codigoNegocio}],                               # Negocio para linkar
                                 'entityCustomFields': [
                                                         {'id': 'CF_POEMy6UeCJGGjmdk', 'textValue': dadosEmpresa['endereco']},

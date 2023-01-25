@@ -64,7 +64,6 @@ def dados_Empresa(jsonEmpresa:dict, logger) -> dict:
                     'origemCaptacao': 'Não informado',
                     'endereco': 'Não informado',
                     'cnpj': 'Não informado',
-                    'site': 'Não informado',
                     'telefone': 'Não informado',
                     'email': 'Não informado'}
         
@@ -106,9 +105,6 @@ def dados_Empresa(jsonEmpresa:dict, logger) -> dict:
                         if not customFields['value'].replace(" ","") == "":
                             dictDados['cnpj'] = customFields['value']
                             break
-        # Site
-        if "Site" in jsonEmpresa['Lead'].keys():
-            dictDados['site'] = jsonEmpresa['Lead']['Site']
 
         # Telefone                       
         if "Phone" in jsonEmpresa['Lead'].keys():
