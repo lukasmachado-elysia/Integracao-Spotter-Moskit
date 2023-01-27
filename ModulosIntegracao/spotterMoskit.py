@@ -117,8 +117,9 @@ def dados_Empresa(jsonEmpresa:dict, logger) -> dict:
             dictDados['telefone'] = jsonEmpresa['Lead']['Phone']
         
         # Email
-        if "Email" in jsonEmpresa['Lead']['Contact'][0]:
-            dictDados['email'] = jsonEmpresa['Lead']['Contact'][0]['Email']
+        if len(jsonEmpresa['Lead']['Contact']) > 0:
+            if "Email" in jsonEmpresa['Lead']['Contact'][0]:
+                dictDados['email'] = jsonEmpresa['Lead']['Contact'][0]['Email']
             
         return dictDados
     except Exception as e:
