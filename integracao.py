@@ -49,6 +49,7 @@ def integracacao_Spotter_Moskit(dicionario:dict):
             reagendamento_Moskit(dicionario)
             
         elif tipoEvento == 'event.leadqualified':
+            logger.info("[API MOSKIT]: FEEDBACK EXECUTIVO")
             with open("../requisicaoFeedback.txt", "w") as f:
                 f.write(str(dicionario))
             f.close()

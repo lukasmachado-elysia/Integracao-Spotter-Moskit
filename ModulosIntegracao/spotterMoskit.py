@@ -24,6 +24,12 @@ def get_Contacts_Spotter(infos:dict, logger):
             # Percorrendo contatos
             listContacts = infos['Lead']['Contact']
 
+            # Deixando zerado
+            email = "Não informado"
+            phone = 'Não informado'
+            position = 'Não informada'
+            name = 'Não informado'
+
             for contact in listContacts:
                 name = contact['Name']
                 # Verificando posicao
